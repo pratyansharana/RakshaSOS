@@ -37,10 +37,11 @@ import {
   useState,
 } from "react";
 
-import "/Users/raunaktiwari07/Desktop/RakshaSOS/RakshaSOS/Apps/Web/src/styles/PoliceFixedLayout.css";
+import "../styles/PoliceFixedLayout.css";
 
 interface PoliceStation {
   policeStationName?: string;
+  stationName?: string;
 
   officerName?: string;
 
@@ -168,6 +169,8 @@ export default function PoliceLayout() {
                 {
                   stationData
                     ?.policeStationName ||
+                  stationData
+                    ?.stationName ||
                   "Police HQ"
                 }
               </h1>

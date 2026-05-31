@@ -43,12 +43,17 @@ export default function PoliceProfile() {
   const [stationData, setStationData] =
     useState({
       stationName: "",
+      policeStationName: "",
       address: "",
       emergencyHotline: "",
+      officerName: "",
+      precinct: "",
 
       womenSafetyEnabled: true,
       nightPatrolEnabled: false,
       emergencyAvailabilityEnabled: true,
+      latitude: "",
+      longitude: "",
     });
 
   /* INSPECTORS */
@@ -107,9 +112,14 @@ export default function PoliceProfile() {
           if (
             stationSnap.exists()
           ) {
+            const data = stationSnap.data();
             setStationData({
               ...stationData,
-              ...stationSnap.data(),
+              ...data,
+              stationName: data.stationName || data.policeStationName || "",
+              policeStationName: data.policeStationName || data.stationName || "",
+              officerName: data.officerName || "",
+              precinct: data.precinct || "",
             });
           } else {
             await setDoc(
@@ -117,6 +127,10 @@ export default function PoliceProfile() {
               {
                 stationName:
                   "New Police Station",
+                policeStationName:
+                  "New Police Station",
+                officerName: "",
+                precinct: "",
 
                 address: "",
 
@@ -131,6 +145,8 @@ export default function PoliceProfile() {
 
                 emergencyAvailabilityEnabled:
                   true,
+                latitude: "",
+                longitude: "",
               }
             );
           }
@@ -197,7 +213,10 @@ export default function PoliceProfile() {
             "policeStations",
             currentUser.uid
           ),
-          stationData
+          {
+            ...stationData,
+            policeStationName: stationData.stationName,
+          }
         );
 
         alert(
@@ -416,6 +435,32 @@ export default function PoliceProfile() {
             </div>
 
             <div className="form-group">
+              <label>Officer Name</label>
+              <input
+                value={stationData.officerName}
+                onChange={(e) =>
+                  setStationData({
+                    ...stationData,
+                    officerName: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Precinct</label>
+              <input
+                value={stationData.precinct}
+                onChange={(e) =>
+                  setStationData({
+                    ...stationData,
+                    precinct: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div className="form-group">
 
               <label>
                 Address
@@ -438,6 +483,34 @@ export default function PoliceProfile() {
                 }
               />
 
+            </div>
+
+            <div className="form-group">
+              <label>Latitude</label>
+              <input
+                type="number"
+                value={stationData.latitude}
+                onChange={(e) =>
+                  setStationData({
+                    ...stationData,
+                    latitude: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Longitude</label>
+              <input
+                type="number"
+                value={stationData.longitude}
+                onChange={(e) =>
+                  setStationData({
+                    ...stationData,
+                    longitude: e.target.value,
+                  })
+                }
+              />
             </div>
 
             <div className="form-group">

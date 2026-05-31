@@ -41,7 +41,7 @@ import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
 
-import "/Users/raunaktiwari07/Desktop/RakshaSOS/RakshaSOS/Apps/Web/src/styles/Policedashboard.css";
+import "../styles/Policedashboard.css";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 
@@ -255,7 +255,7 @@ function PoliceDashboard() {
             stationSnap.data();
 
           setStationName(
-            data.policeStationName
+            data.policeStationName || data.stationName || ""
           );
         }
 
@@ -276,9 +276,9 @@ function PoliceDashboard() {
 
     const unsubscribe =
       onSnapshot(
-        collection(
-          db,
-          "sos"
+        query(
+          collection(db, "sos_alerts"),
+          where("police_station_id", "==", policeStationId)
         ),
 
         (
@@ -293,6 +293,21 @@ function PoliceDashboard() {
 
                 id:
                   firebaseDoc.id,
+
+                latitude:
+                  firebaseDoc.data().last_known_lat || firebaseDoc.data().latitude || 0,
+
+                longitude:
+                  firebaseDoc.data().last_known_lng || firebaseDoc.data().longitude || 0,
+
+                victimName:
+                  firebaseDoc.data().victim_name || firebaseDoc.data().victimName || "Unknown",
+
+                type:
+                  firebaseDoc.data().sos_type || firebaseDoc.data().type || "Emergency",
+
+                severity:
+                  firebaseDoc.data().severity || "Critical",
 
                 ...(firebaseDoc.data() as Omit<
                   SOSData,
@@ -447,7 +462,7 @@ function PoliceDashboard() {
       await updateDoc(
         doc(
           db,
-          "sos",
+          "sos_alerts",
           sos.id
         ),
 
@@ -480,7 +495,7 @@ function PoliceDashboard() {
       await updateDoc(
         doc(
           db,
-          "sos",
+          "sos_alerts",
           sos.id
         ),
 
