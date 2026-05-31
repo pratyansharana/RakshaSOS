@@ -41,7 +41,7 @@ import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
 
-import "../styles/Policedashboard.css";
+import "../styles/PoliceDashboard.css";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 
