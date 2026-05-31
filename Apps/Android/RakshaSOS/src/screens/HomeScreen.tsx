@@ -1,7 +1,6 @@
+import { Dimensions } from 'react-native';
 import React, { useRef, useState, useEffect } from 'react';
 import {
-    Dimensions,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
@@ -16,6 +15,7 @@ import {
     Image,
     ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../config/firebaseconfig';
 import {

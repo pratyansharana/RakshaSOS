@@ -4,14 +4,14 @@ import {
 } from "react";
 
 import {
+  addDoc,
   collection,
+  doc,
+  getDoc,
   onSnapshot,
   query,
-  where,
-  doc,
   updateDoc,
-  addDoc,
-  getDoc,
+  where,
 } from "firebase/firestore";
 
 import {
@@ -21,20 +21,20 @@ import {
 
 import {
   AlertTriangle,
-  Shield,
-  Plus,
-  Phone,
+  CheckCircle2,
   MapPinned,
+  Phone,
+  Plus,
+  Shield,
   Siren,
   X,
-  CheckCircle2,
 } from "lucide-react";
 
 import {
   MapContainer,
-  TileLayer,
   Marker,
   Popup,
+  TileLayer,
 } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -308,7 +308,7 @@ function PoliceDashboard() {
                 !sos.acceptedPoliceStationId ||
                 sos.acceptedPoliceStationId === "" ||
                 sos.acceptedPoliceStationId ===
-                  policeStationId
+                policeStationId
             );
 
           setSOSList(
@@ -835,7 +835,7 @@ function PoliceDashboard() {
             </div>
 
             {fireUnits.length ===
-            0 ? (
+              0 ? (
 
               <p className="empty-text">
 
@@ -913,7 +913,7 @@ function PoliceDashboard() {
             </div>
 
             {ambulanceDispatches.length ===
-            0 ? (
+              0 ? (
               <p className="empty-text">
                 No ambulance dispatch
                 updates yet
@@ -941,7 +941,7 @@ function PoliceDashboard() {
                       onClick={() =>
                         callNumber(
                           sos.assignedDriverPhone ||
-                            ""
+                          ""
                         )
                       }
                     >

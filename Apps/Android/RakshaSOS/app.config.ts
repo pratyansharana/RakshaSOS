@@ -21,6 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...config.extra,
       groqApiKey: process.env.EXPO_PUBLIC_GROQ_API_KEY || process.env.GROQ_API_KEY || config.extra?.groqApiKey,
       groqModel: process.env.EXPO_PUBLIC_GROQ_MODEL || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY,
       googleMapsApiKey:
         process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ||
         process.env.GOOGLE_MAPS_API_KEY ||

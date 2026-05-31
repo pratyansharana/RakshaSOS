@@ -197,7 +197,7 @@ function LandingPage() {
           <div className="map-card">
 
             <img
-              src="/Users/raunaktiwari07/Desktop/RakshaSOS/photo-1586449480537-3a22cf98b04c.avif"
+              src="/src/assets/photo-1586449480537-3a22cf98b04c.avif"
               alt="Emergency Map"
             />
 

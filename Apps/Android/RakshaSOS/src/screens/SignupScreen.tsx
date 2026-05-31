@@ -10,8 +10,8 @@ import {
     Platform,
     TouchableWithoutFeedback,
     Keyboard,
-    SafeAreaView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebaseconfig';
 import { useApp } from '../context/AppContext';

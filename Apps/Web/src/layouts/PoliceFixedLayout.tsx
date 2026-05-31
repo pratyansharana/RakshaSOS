@@ -37,7 +37,7 @@ import {
   useState,
 } from "react";
 
-import "/Users/raunaktiwari07/Desktop/RakshaSOS/RakshaSOS/Apps/Web/src/styles/PoliceFixedLayout.css";
+import "../styles/PoliceFixedLayout.css";
 
 interface PoliceStation {
   policeStationName?: string;

@@ -4,6 +4,7 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { useApp } from '../context/AppContext';
+import { auth } from '../config/firebaseconfig';
 
 export default function SplashScreen({ navigation }: { navigation: any }) {
   const scale = useRef(new Animated.Value(0.92)).current;
@@ -26,7 +27,11 @@ export default function SplashScreen({ navigation }: { navigation: any }) {
     ]).start();
 
     const timer = setTimeout(() => {
-      navigation.replace('Language');
+      if (auth.currentUser) {
+        navigation.replace('MainTabs');
+      } else {
+        navigation.replace('Signup');
+      }
     }, 1400);
 
     return () => clearTimeout(timer);

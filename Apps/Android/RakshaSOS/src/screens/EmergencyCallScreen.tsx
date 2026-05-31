@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -8,8 +7,10 @@ import {
   ScrollView,
   Alert,
   Modal,
-  TextInput
+  TextInput,
+  Linking
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   Phone,
@@ -78,7 +79,15 @@ export default function EmergencyCallScreen({ navigation }: any) {
       `Initiate emergency call to ${name} (${number})?`,
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Call Now", onPress: () => Alert.alert("Connecting", `Calling ${number}...`) }
+        { 
+          text: "Call Now", 
+          onPress: () => {
+            const phoneNumber = number.replace(/[^0-9+]/g, '');
+            Linking.openURL(`tel:${phoneNumber}`).catch(() => {
+              Alert.alert("Call failed", "Could not open dialer. Please dial manually.");
+            });
+          } 
+        }
       ]
     );
   };
