@@ -190,7 +190,7 @@ function AmbulanceLogistics() {
     if (!hospitalId) return;
 
     const q = query(
-      collection(db, "sos"),
+      collection(db, "sos_alerts"),
 
       where(
         "acceptedHospitalId",
@@ -213,6 +213,21 @@ function AmbulanceLogistics() {
 
                   id:
                     firebaseDoc.id,
+
+                  latitude:
+                    firebaseDoc.data().last_known_lat || firebaseDoc.data().latitude || 0,
+
+                  longitude:
+                    firebaseDoc.data().last_known_lng || firebaseDoc.data().longitude || 0,
+
+                  victimName:
+                    firebaseDoc.data().victim_name || firebaseDoc.data().victimName || "Unknown",
+
+                  emergencyType:
+                    firebaseDoc.data().sos_type || firebaseDoc.data().emergencyType || "Emergency",
+
+                  severity:
+                    firebaseDoc.data().severity || "Critical",
 
                   ...firebaseDoc.data(),
 
@@ -413,7 +428,7 @@ function AmbulanceLogistics() {
         await updateDoc(
           doc(
             db,
-            "sos",
+            "sos_alerts",
             selectedSOS.id
           ),
 
@@ -547,7 +562,7 @@ https://maps.google.com/?q=${selectedSOS.latitude},${selectedSOS.longitude}
         await updateDoc(
           doc(
             db,
-            "sos",
+            "sos_alerts",
             ambulance.currentSOSId
           ),
 

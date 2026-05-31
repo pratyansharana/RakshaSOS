@@ -17,11 +17,14 @@ import {
 } from "../firebase/firebaseConfig";
 
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
   onSnapshot,
   query,
+  serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -41,6 +44,18 @@ const defaultCenter = {
   lat: 20.5937,
   lng: 78.9629,
 };
+
+function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export default function HospitalDashboard() {
 
@@ -98,15 +113,9 @@ export default function HospitalDashboard() {
       onAuthStateChanged(
         auth,
         (user) => {
-
-          if (user) {
-
-            setCurrentUser(
-              user
-            );
-
-          }
-
+          setCurrentUser(
+            user
+          );
         }
       );
 
@@ -185,92 +194,43 @@ export default function HospitalDashboard() {
 
   }, [currentUser]);
 
-  /* PENDING SOS */
+  /* SOS ALERTS (PENDING & ACCEPTED) */
 
   useEffect(() => {
 
-    if (!currentUser)
+    if (!currentUser) {
+      setPopupSOS(null);
+      setAcceptedSOS([]);
       return;
+    }
+
+    const sosQuery = query(
+      collection(db, "sos_alerts"),
+      where("hospitals_notified", "array-contains", currentUser.uid)
+    );
 
     const unsubscribe =
       onSnapshot(
-        collection(
-          db,
-          "sos"
-        ),
+        sosQuery,
         (snapshot) => {
 
-          const data =
-            snapshot.docs.map(
-              (doc) => ({
+          const data = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...(doc.data() as any),
+          }));
 
-                id:
-                  doc.id,
-
-                ...(doc.data() as any),
-
-              })
-            );
-
-          const incoming =
-            data.filter(
-              (sos) =>
-                !sos.acceptedHospitalId ||
-                sos.acceptedHospitalId === ""
-            );
-
-          setPopupSOS(
-            incoming[0] || null
+          const incoming = data.filter(
+            (sos) => !sos.accepted_by_hospital && (sos.status === "active" || sos.status === "triggered")
           );
-
-        }
-      );
-
-    return () =>
-      unsubscribe();
-
-  }, [currentUser]);
-
-  /* ACCEPTED SOS */
-
-  useEffect(() => {
-
-    if (!currentUser)
-      return;
-
-    const unsubscribe =
-      onSnapshot(
-        collection(
-          db,
-          "sos"
-        ),
-        (snapshot) => {
-
-          const data =
-            snapshot.docs.map(
-              (doc) => ({
-
-                id:
-                  doc.id,
-
-                ...(doc.data() as any),
-
-              })
-            );
+          setPopupSOS(incoming[0] || null);
 
           setAcceptedSOS(
-            data.filter(
-              (sos) =>
-                sos.acceptedHospitalId ===
-                currentUser.uid
-            )
+            data.filter((sos) => sos.accepted_by_hospital === currentUser.uid)
           );
-
         }
       );
 
-    return () =>
-      unsubscribe();
+    return () => unsubscribe();
 
   }, [currentUser]);
 
@@ -293,7 +253,7 @@ export default function HospitalDashboard() {
         ambulanceRef,
 
         where(
-          "hospitalId",
+          "hospital_id",
           "==",
           currentUser.uid
         )
@@ -336,30 +296,118 @@ export default function HospitalDashboard() {
       sosId: string
     ) => {
 
-      if (!currentUser)
+      if (!currentUser || !hospitalData)
         return;
 
       try {
 
-        await updateDoc(
+        const parsedAge    = popupSOS.victim_age || popupSOS.age || "N/A";
+        const parsedGender = popupSOS.victim_gender || popupSOS.gender || "N/A";
 
+        const hospitalLat = Number(hospitalData.latitude || hospitalData.lat || hospitalLocation.lat);
+        const hospitalLng = Number(hospitalData.longitude || hospitalData.lng || hospitalLocation.lng);
+        const sosLat = Number(popupSOS.last_known_lat);
+        const sosLng = Number(popupSOS.last_known_lng);
+
+        let eta = 10;
+        let distanceText = "Unknown";
+
+        if (hospitalLat && hospitalLng && sosLat && sosLng) {
+          try {
+            const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API;
+            const response = await fetch(
+              `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${hospitalLat},${hospitalLng}&destinations=${sosLat},${sosLng}&key=${apiKey}`
+            );
+            const dmData = await response.json();
+            const element = dmData.rows?.[0]?.elements?.[0];
+            if (element && element.status === "OK") {
+              eta = Math.ceil(element.duration.value / 60);
+              distanceText = element.distance.text;
+            } else {
+              const distanceKm = getDistanceKm(hospitalLat, hospitalLng, sosLat, sosLng);
+              eta = Math.max(2, Math.ceil((distanceKm / 40) * 60));
+              distanceText = `${distanceKm.toFixed(1)} km`;
+            }
+          } catch (dmErr) {
+            console.error("Distance Matrix failed, using Haversine:", dmErr);
+            const distanceKm = getDistanceKm(hospitalLat, hospitalLng, sosLat, sosLng);
+            eta = Math.max(2, Math.ceil((distanceKm / 40) * 60));
+            distanceText = `${distanceKm.toFixed(1)} km`;
+          }
+        }
+
+        // Write incident log fields directly into the sos_alerts doc (merge)
+        await setDoc(
+          doc(db, "sos_alerts", sosId),
+          {
+            victimName:              popupSOS.victim_name || "Unknown",
+            gender:                  parsedGender,
+            age:                     parsedAge,
+            bloodGroup:              popupSOS.blood_group || "N/A",
+            condition:               popupSOS.chronic_conditions || popupSOS.condition || "N/A",
+            pulse:                   popupSOS.pulse || "N/A",
+            type:                    popupSOS.sos_type || "Emergency",
+            severity:                popupSOS.severity || "Critical",
+            imageUrl:                popupSOS.image_url || null,
+            voiceNoteUrl:            popupSOS.voice_note_url || popupSOS.audio_recording_url || null,
+            address:                 popupSOS.address_text || "N/A",
+            latitude:                sosLat || 0,
+            longitude:               sosLng || 0,
+            acceptedHospitalId:      currentUser.uid,
+            incidentStatus:          "active",
+            ambulanceStatus:         "waiting",
+            ambulanceAssigned:       false,
+            estimatedArrivalMinutes: eta,
+            distanceText:            distanceText,
+            createdAt:               Date.now(),
+          },
+          { merge: true }
+        );
+
+        await updateDoc(
           doc(
             db,
-            "sos",
+            "sos_alerts",
             sosId
           ),
-
           {
-
-            hospitalStatus:
+            status:
               "accepted",
-
-            acceptedHospitalId:
+            accepted_by_hospital:
               currentUser.uid,
-
+            accepted_by_name:
+              hospitalData.name ||
+              hospitalData.hospital_name ||
+              "Unknown Hospital",
+            accepted_at:
+              serverTimestamp(),
+            ambulance_eta:
+              eta,
           }
-
         );
+
+        // ── Write accepted timeline event to emergency_timeline ──
+        try {
+          await addDoc(
+            collection(db, "emergency_timeline"),
+            {
+              sos_id:       sosId,
+              event_type:   "hospital_accepted",
+              timestamp:    serverTimestamp(),
+              event_details: {
+                hospital_id:   currentUser.uid,
+                hospital_name: hospitalData.name ||
+                               hospitalData.hospital_name ||
+                               "Unknown Hospital",
+                eta_minutes:   eta,
+                distance:      distanceText,
+                victim_name:   popupSOS.victim_name || "Unknown",
+              },
+            }
+          );
+        } catch (tlErr) {
+          console.warn("Timeline write failed (non-critical):", tlErr);
+        }
 
         setPopupSOS(null);
 
@@ -377,27 +425,10 @@ export default function HospitalDashboard() {
 
   const rejectSOS =
     async (
-      sosId: string
+      _sosId: string
     ) => {
 
       try {
-
-        await updateDoc(
-
-          doc(
-            db,
-            "sos",
-            sosId
-          ),
-
-          {
-
-            hospitalStatus:
-              "rejected",
-
-          }
-
-        );
 
         setPopupSOS(null);
 
@@ -425,12 +456,12 @@ export default function HospitalDashboard() {
 
           lat: Number(
             acceptedSOS[0]
-              .latitude
+              .last_known_lat
           ),
 
           lng: Number(
             acceptedSOS[0]
-              .longitude
+              .last_known_lng
           ),
 
         };
@@ -509,7 +540,7 @@ export default function HospitalDashboard() {
               <h2>
 
                 {
-                  popupSOS.type ||
+                  popupSOS.sos_type ||
                   "Emergency"
                 }
 
@@ -521,11 +552,35 @@ export default function HospitalDashboard() {
                 {" "}
 
                 {
-                  popupSOS.address ||
+                  popupSOS.address_text ||
                   "N/A"
                 }
 
               </p>
+
+              <p className="victim-preview">
+                <strong>Victim:</strong> {popupSOS.victim_name || "Unknown"}
+              </p>
+              <p className="medical-preview">
+                <strong>Blood Group:</strong> {popupSOS.blood_group || "N/A"}
+              </p>
+
+              {(() => {
+                const hospitalLat = Number(hospitalData?.latitude || hospitalData?.lat || hospitalLocation.lat);
+                const hospitalLng = Number(hospitalData?.longitude || hospitalData?.lng || hospitalLocation.lng);
+                const sosLat = Number(popupSOS.last_known_lat);
+                const sosLng = Number(popupSOS.last_known_lng);
+                if (hospitalLat && hospitalLng && sosLat && sosLng) {
+                  const dist = getDistanceKm(hospitalLat, hospitalLng, sosLat, sosLng);
+                  const estEta = Math.max(2, Math.ceil((dist / 40) * 60));
+                  return (
+                    <p className="location-preview" style={{ marginTop: "8px", borderTop: "1px solid #eee", paddingTop: "8px" }}>
+                      <strong>Distance:</strong> {dist.toFixed(1)} km &nbsp;•&nbsp; <strong>ETA:</strong> ~{estEta} mins
+                    </p>
+                  );
+                }
+                return null;
+              })()}
 
             </div>
 
@@ -655,11 +710,11 @@ export default function HospitalDashboard() {
                       position={{
 
                         lat: Number(
-                          sos.latitude
+                          sos.last_known_lat
                         ),
 
                         lng: Number(
-                          sos.longitude
+                          sos.last_known_lng
                         ),
 
                       }}
@@ -780,7 +835,7 @@ export default function HospitalDashboard() {
                             <h3>
 
                               {
-                                ambulance.ambulanceNumber ||
+                                ambulance.ambulance_number ||
                                 "N/A"
                               }
 
@@ -789,7 +844,7 @@ export default function HospitalDashboard() {
                             <p>
 
                               {
-                                ambulance.driverName ||
+                                ambulance.driver_name ||
                                 "N/A"
                               }
 
@@ -798,7 +853,7 @@ export default function HospitalDashboard() {
                             <strong>
 
                               {
-                                ambulance.driverPhone ||
+                                ambulance.driver_phone ||
                                 "N/A"
                               }
 
@@ -829,7 +884,7 @@ export default function HospitalDashboard() {
                           <h1>
 
                             {
-                              ambulance.estimatedArrivalMinutes ||
+                              ambulance.estimated_arrival_minutes ||
                               "--"
                             }
                             m
@@ -854,13 +909,13 @@ export default function HospitalDashboard() {
 🚑 Live Ambulance Dispatch
 
 Ambulance:
-${ambulance.ambulanceNumber}
+${ambulance.ambulance_number}
 
 Driver:
-${ambulance.driverName}
+${ambulance.driver_name}
 
 ETA:
-${ambulance.estimatedArrivalMinutes} mins
+${ambulance.estimated_arrival_minutes} mins
 `;
 
                               window.open(
@@ -897,13 +952,13 @@ ${ambulance.estimatedArrivalMinutes} mins
                                     status:
                                       "available",
 
-                                    currentSOSId:
+                                    current_sos_id:
                                       null,
 
-                                    assignedVictimName:
+                                    assigned_victim_name:
                                       null,
 
-                                    estimatedArrivalMinutes:
+                                    estimated_arrival_minutes:
                                       null,
 
                                   }
@@ -911,15 +966,15 @@ ${ambulance.estimatedArrivalMinutes} mins
                                 );
 
                                 if (
-                                  ambulance.currentSOSId
+                                  ambulance.current_sos_id
                                 ) {
 
                                   await updateDoc(
 
                                     doc(
                                       db,
-                                      "sos",
-                                      ambulance.currentSOSId
+                                      "sos_alerts",
+                                      ambulance.current_sos_id
                                     ),
 
                                     {
@@ -1025,7 +1080,7 @@ ${ambulance.estimatedArrivalMinutes} mins
                     <h3>
 
                       {
-                        sos.type ||
+                        sos.sos_type ||
                         "Emergency"
                       }
 
@@ -1042,7 +1097,7 @@ ${ambulance.estimatedArrivalMinutes} mins
                         <strong>
 
                           {
-                            sos.victimName ||
+                            sos.victim_name ||
                             "N/A"
                           }
 
@@ -1059,6 +1114,7 @@ ${ambulance.estimatedArrivalMinutes} mins
                         <strong>
 
                           {
+                            sos.victim_age ||
                             sos.age ||
                             "N/A"
                           }
@@ -1076,6 +1132,7 @@ ${ambulance.estimatedArrivalMinutes} mins
                         <strong>
 
                           {
+                            sos.victim_gender ||
                             sos.gender ||
                             "N/A"
                           }
@@ -1093,7 +1150,7 @@ ${ambulance.estimatedArrivalMinutes} mins
                         <strong>
 
                           {
-                            sos.bloodGroup ||
+                            sos.blood_group ||
                             "N/A"
                           }
 
@@ -1128,6 +1185,7 @@ ${ambulance.estimatedArrivalMinutes} mins
 
                           {
                             sos.condition ||
+                            sos.chronic_conditions ||
                             "N/A"
                           }
 
@@ -1144,7 +1202,7 @@ ${ambulance.estimatedArrivalMinutes} mins
                         <strong>
 
                           {
-                            sos.address ||
+                            sos.address_text ||
                             "N/A"
                           }
 

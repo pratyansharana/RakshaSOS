@@ -41,6 +41,7 @@ import "../styles/PoliceFixedLayout.css";
 
 interface PoliceStation {
   policeStationName?: string;
+  stationName?: string;
 
   officerName?: string;
 
@@ -168,6 +169,8 @@ export default function PoliceLayout() {
                 {
                   stationData
                     ?.policeStationName ||
+                  stationData
+                    ?.stationName ||
                   "Police HQ"
                 }
               </h1>

@@ -25,14 +25,14 @@ import PoliceLogin from "./pages/PoliceLogin";
 
 /* HOSPITAL PAGES */
 
-import HospitalDashboard from "./pages/Hospitaldashboard";
+import HospitalDashboard from "./pages/HospitalDashboard";
 import AmbulanceLogistics from "./pages/AmbulanceLogistics";
 import IncidentLogs from "./pages/IncidentLogs";
 import HospitalProfile from "./pages/HospitalProfile";
 
 /* POLICE PAGES */
 
-import PoliceDashboard from "./pages/Policedashboard";
+import PoliceDashboard from "./pages/PoliceDashboard";
 import PoliceIncidentLogs from "./pages/PoliceIncidentLogs";
 import PoliceProfile from "./pages/PoliceProfile";
 
