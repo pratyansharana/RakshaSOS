@@ -294,6 +294,11 @@ function PoliceDashboard() {
                 id:
                   firebaseDoc.id,
 
+                ...(firebaseDoc.data() as Omit<
+                  SOSData,
+                  "id"
+                >),
+
                 latitude:
                   firebaseDoc.data().last_known_lat || firebaseDoc.data().latitude || 0,
 
@@ -308,11 +313,6 @@ function PoliceDashboard() {
 
                 severity:
                   firebaseDoc.data().severity || "Critical",
-
-                ...(firebaseDoc.data() as Omit<
-                  SOSData,
-                  "id"
-                >),
 
               })
             );
