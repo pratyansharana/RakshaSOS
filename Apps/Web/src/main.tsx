@@ -87,7 +87,7 @@ ReactDOM.createRoot(
           {/* Dashboard */}
 
           <Route
-            index
+             path="/hospital-dashboard"
             element={<HospitalDashboard />}
           />
 

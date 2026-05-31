@@ -38,9 +38,7 @@ function LandingPage() {
             Live Status: Stable
           </div>
 
-          <button className="login-btn">
-            Login
-          </button>
+     
 
         </div>
 

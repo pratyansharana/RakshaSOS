@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/HospitalLogin.css";
 
-import { loginUser } from "../firebase/auth";
+
 
 function HospitalLogin() {
 
@@ -11,34 +11,11 @@ function HospitalLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
+const handleLogin = async () => {
 
-    try {
+  navigate("/hospital-dashboard");
 
-      const user = await loginUser(
-        email,
-        password
-      );
-
-      if (user.emailVerified) {
-
-        navigate("/hospital-dashboard");
-
-      } else {
-
-        alert(
-          "Please verify your email before logging in."
-        );
-
-      }
-
-    } catch (error: any) {
-
-      alert(error.message);
-
-    }
-
-  };
+};;
 
   return (
 
