@@ -29,6 +29,12 @@
     "plugins": [
       "@react-native-google-signin/google-signin",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "groqModel": "llama-3.3-70b-versatile",
+      "eas": {
+        "projectId": "68c1309e-2457-46cd-96b8-e79c0b7c167c"
+      }
+    }
   }
 }
