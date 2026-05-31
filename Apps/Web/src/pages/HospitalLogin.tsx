@@ -20,17 +20,7 @@ function HospitalLogin() {
         password
       );
 
-      if (user.emailVerified) {
-
-        navigate("/hospital-dashboard");
-
-      } else {
-
-        alert(
-          "Please verify your email before logging in."
-        );
-
-      }
+      navigate("/hospital-dashboard");
 
     } catch (error: any) {
 

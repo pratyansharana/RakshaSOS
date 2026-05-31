@@ -40,7 +40,7 @@ function PoliceSignup() {
     );
 
     alert(
-      "Verification email sent. Please verify your email before login."
+      "Police station registered successfully."
     );
 
     navigate("/police-login");

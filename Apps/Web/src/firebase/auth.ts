@@ -2,7 +2,6 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  sendEmailVerification,
 } from "firebase/auth";
 
 import {app} from "./firebaseConfig";
@@ -21,10 +20,6 @@ export const signupUser = async (
       email,
       password
     );
-
-  await sendEmailVerification(
-    userCredential.user
-  );
 
   return userCredential.user;
 };

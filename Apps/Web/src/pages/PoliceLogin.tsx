@@ -20,17 +20,7 @@ function PoliceLogin() {
         password
       );
 
-      if (user.emailVerified) {
-
-        navigate("/police-dashboard");
-
-      } else {
-
-        alert(
-          "Please verify your email before logging in."
-        );
-
-      }
+      navigate("/police-dashboard");
 
     } catch (error: any) {
 

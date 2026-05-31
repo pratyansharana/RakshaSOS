@@ -6,7 +6,6 @@ import "../styles/HospitalSignup.css";
 
 import {
   createUserWithEmailAndPassword,
-  sendEmailVerification,
 } from "firebase/auth";
 
 import {
@@ -196,12 +195,6 @@ const handleSignup = async () => {
         email,
         password
       );
-
-    /* VERIFY EMAIL */
-
-    await sendEmailVerification(
-      userCredential.user
-    );
 
     /* SAVE HOSPITAL */
 
