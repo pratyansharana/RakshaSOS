@@ -7,9 +7,14 @@ import {
 import {
   collection,
   onSnapshot,
+  query,
+  where,
 } from "firebase/firestore";
 
-import { db } from "../firebase/firebaseConfig";
+import {
+  db,
+  auth
+} from "../firebase/firebaseConfig";
 
 import {
   FaAmbulance,
@@ -30,6 +35,8 @@ export default function PoliceIncidentLogs() {
   const [searchTerm, setSearchTerm] =
     useState("");
 
+  const policeStationId = auth.currentUser?.uid;
+
   const [statusFilter, setStatusFilter] =
     useState("All");
 
@@ -41,12 +48,18 @@ export default function PoliceIncidentLogs() {
   useEffect(() => {
     const unsubscribe =
       onSnapshot(
-        collection(db, "sos"),
+        query(
+          collection(db, "sos_alerts"),
+          where("police_station_id", "==", policeStationId)
+        ),
         (snapshot) => {
           const data =
             snapshot.docs.map(
               (doc) => ({
                 id: doc.id,
+                victimName: doc.data().victim_name || doc.data().victimName || "Unknown",
+                type: doc.data().sos_type || doc.data().type || "Emergency",
+                severity: doc.data().severity || "Critical",
                 ...doc.data(),
               })
             );

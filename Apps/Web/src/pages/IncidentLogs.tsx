@@ -86,7 +86,7 @@ export default function IncidentLogs() {
     const sosRef =
       collection(
         db,
-        "sos"
+        "sos_alerts"
       );
 
     const q =
@@ -95,7 +95,7 @@ export default function IncidentLogs() {
         sosRef,
 
         where(
-          "acceptedHospitalId",
+          "accepted_by_hospital",
           "==",
           currentUser.uid
         )
@@ -288,7 +288,7 @@ ${incident.type}
 
           doc(
             db,
-            "sos",
+            "sos_alerts",
             incidentId
           ),
 
