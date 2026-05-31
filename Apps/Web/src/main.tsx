@@ -25,14 +25,14 @@ import PoliceLogin from "./pages/PoliceLogin";
 
 /* HOSPITAL PAGES */
 
-import HospitalDashboard from "./pages/HospitalDashboard";
+import HospitalDashboard from "./pages/Hospitaldashboard";
 import AmbulanceLogistics from "./pages/AmbulanceLogistics";
 import IncidentLogs from "./pages/IncidentLogs";
 import HospitalProfile from "./pages/HospitalProfile";
 
 /* POLICE PAGES */
 
-import PoliceDashboard from "./pages/PoliceDashboard";
+import PoliceDashboard from "./pages/Policedashboard";
 import PoliceIncidentLogs from "./pages/PoliceIncidentLogs";
 import PoliceProfile from "./pages/PoliceProfile";
 
@@ -87,7 +87,7 @@ ReactDOM.createRoot(
           {/* Dashboard */}
 
           <Route
-            index
+             path="/hospital-dashboard"
             element={<HospitalDashboard />}
           />
 

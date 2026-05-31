@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/PoliceLogin.css";
 
-import { loginUser } from "../firebase/auth";
+
 
 function PoliceLogin() {
 
@@ -13,20 +13,10 @@ function PoliceLogin() {
 
   const handleLogin = async () => {
 
-    try {
 
-      const user = await loginUser(
-        email,
-        password
-      );
 
       navigate("/police-dashboard");
 
-    } catch (error: any) {
-
-      alert(error.message);
-
-    }
 
   };
 
